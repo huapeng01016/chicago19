@@ -1,0 +1,35 @@
+<h1><a href="#a-fuel-consumption-study-of-statas-auto-dataset" id="a-fuel-consumption-study-of-statas-auto-dataset">A fuel consumption study of Stata&rsquo;s auto dataset</a></h1>
+<p>We conduct a study of the fuel consumption of cars in Stata&rsquo;s auto dataset.</p>
+<pre><code>. sysuse auto, clear
+(1978 Automobile Data)
+
+</code></pre>
+<p>We generate a variable, <strong>fuel</strong>, that measures the fuel consumption rate in the unit of Gallons per 100 Miles.</p>
+<pre><code>. generate fuel = 100/mpg
+
+. label variable fuel &quot;Fuel consumption (Gallons per 100 Miles)&quot;
+
+</code></pre>
+<h2><a href="#explore-relationship-between-fuel-consumption-and-vehicle-weight" id="explore-relationship-between-fuel-consumption-and-vehicle-weight">Explore relationship between fuel consumption and vehicle weight</a></h2>
+<pre><code>. scatter fuel weight, mcolor(blue%50)
+
+</code></pre>
+<img src="sc_fuel.svg" height="400" alt="scatter fuel weight" >
+<pre><code>. regress fuel weight
+
+      Source |       SS           df       MS      Number of obs   =        74
+-------------+----------------------------------   F(1, 72)        =    194.71
+       Model |  87.2964969         1  87.2964969   Prob &gt; F        =    0.0000
+    Residual |  32.2797639        72  .448330054   R-squared       =    0.7300
+-------------+----------------------------------   Adj R-squared   =    0.7263
+       Total |  119.576261        73  1.63803097   Root MSE        =    .66957
+
+------------------------------------------------------------------------------
+        fuel |      Coef.   Std. Err.      t    P&gt;|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      weight |    .001407   .0001008    13.95   0.000      .001206    .0016081
+       _cons |   .7707669   .3142571     2.45   0.017     .1443069    1.397227
+------------------------------------------------------------------------------
+
+</code></pre>
+<p>The regression shows that for every unit increase in weight, a 0.0014 unit increase in fuel consumption is predicted.</p>

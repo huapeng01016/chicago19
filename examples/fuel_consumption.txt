@@ -1,0 +1,149 @@
+<<dd_version: 1>>
+
+<head>
+<link rel="stylesheet" type="text/css" href="stmarkdown.css">
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+<script type="text/javascript" async
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML">
+</script>
+</head>
+
+<<dd_do: quietly>>
+syntax [anything(name=detail)]
+<</dd_do>>
+
+<<dd_do: quietly>>
+set linesize 80
+<</dd_do>>
+
+
+# A fuel consumption study of Stata's auto dataset
+
+We conduct a study of the fuel consumption of cars in Stata's auto dataset. 
+
+~~~~
+<<dd_do>>
+sysuse auto, clear
+<</dd_do>>
+~~~~
+
+## Perform data transformation
+
+We generate a variable, **fuel**, that measures the fuel consumption rate in the unit of 
+Gallons per 100 Miles.  
+
+~~~~
+<<dd_do>>
+generate fuel = 100/mpg
+label variable fuel "Fuel consumption (Gallons per 100 Miles)"
+<</dd_do>>
+~~~~
+
+<<dd_skip_if: ("`details'"=="")>>
+The following explains why Gallons per 100 Mile is a better measurement than 
+Miles per Gallon. Going from a 10 Miles per Gallon car to a 20 Miles per Gallon 
+car saves 5 Gallons per 100 Miles when Miles per Gallon increases 10. Going 
+from a 20 Miles per Gallon car to a 40 Miles per Gallon car *only* saves 2.5 Gallons 
+per 100 Miles when Miles per Gallon increases 20.      
+<<dd_skip_end>>
+
+## Examine the variables
+
+We examine variables for possible errors in the data.
+
+~~~~
+<<dd_do>>
+describe fuel weight
+<</dd_do>>
+~~~~
+
+<<dd_do:quietly>>
+assert fuel > 0 
+<</dd_do>>
+
+~~~~
+<<dd_do>>
+summarize weight
+<</dd_do>>
+~~~~
+
+The variable **weight** has minimum value <<dd_display: %4.2f `r(min)'>>, maximum value 
+<<dd_display: %4.2f `r(max)'>>, and range <<dd_display: %4.2f `r(max)'-`r(min)'>>.
+
+##  Plot fuel consumption and vehicle weight 
+
+~~~~
+<<dd_do>>
+scatter fuel weight, mcolor(blue%50)
+<</dd_do>>
+~~~~
+
+<<dd_graph: sav("sc_gp100m_mpg.png") alt("scatter fuel weight") replace markdown>>
+
+## Explore relationship between fuel consumption and vehicle weight - linear regression
+
+~~~~
+<<dd_do>>
+regress fuel weight
+<</dd_do>>
+~~~~
+
+<<dd_do:quietly>>
+matrix define eb = e(b)
+<</dd_do>>
+
+The regression shows that for every unit increase in weight, a 
+<<dd_display:%9.4f eb[1,1]>> unit increase in fuel consumption is predicted.
+
+## Produce an HTML table from regression results
+
+<<dd_do>>
+_coef_table, markdown
+<</dd_do>>
+
+## Produce a table from **estimates table**
+
+~~~~
+<<dd_do>>
+quietly regress fuel weight gear turn
+estimates store model1
+quietly regress fuel weight gear turn foreign
+estimates store model2
+estimates table model1 model2, b(%7.4f) stats(N r2_a) star
+<</dd_do>>
+~~~~
+
+<<dd_do>>
+estimates table model1 model2, varlabel b(%7.4f) stats(N r2_a) star markdown
+<</dd_do>>
+
+## Produce a table from community-contributed **esttab**
+
+<<dd_do: quietly>>
+cap erase esttab_ex.html
+eststo clear
+<</dd_do>>
+
+~~~~
+<<dd_do>>
+eststo : quietly regress fuel weight gear turn
+eststo : quietly regress fuel weight gear turn foreign
+esttab using esttab_ex.html, label   /// 
+	width(80%) nogaps                ///
+	mtitles("Model 1" "Model 2")       ///
+	title(Regression table using -esttab-) 
+<</dd_do>>
+~~~~~
+
+<<dd_include:esttab_ex.html>>
+
+<<dd_do: quietly>>
+cap erase esttab_ex.html
+<</dd_do>>
+
+The community-contributed **esttab** is available on the Boston College Statistical 
+Software Components (SSC) archive; see [ssc install](https://www.stata.com/support/ssc-installation/) 
+for details.
+

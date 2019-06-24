@@ -1,0 +1,158 @@
+<head>
+<link rel="stylesheet" type="text/css" href="stmarkdown.css">
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+<script type="text/javascript" async
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML">
+</script>
+</head>
+<h1><a href="#a-fuel-consumption-study-of-statas-auto-dataset" id="a-fuel-consumption-study-of-statas-auto-dataset">A fuel consumption study of Stata&rsquo;s auto dataset</a></h1>
+<p>We conduct a study of the fuel consumption of cars in Stata&rsquo;s auto dataset.</p>
+<pre><code>. sysuse auto, clear
+(1978 Automobile Data)
+
+</code></pre>
+<h2><a href="#perform-data-transformation" id="perform-data-transformation">Perform data transformation</a></h2>
+<p>We generate a variable, <strong>fuel</strong>, that measures the fuel consumption rate in the unit of Gallons per 100 Miles.</p>
+<pre><code>. generate fuel = 100/mpg
+
+. label variable fuel &quot;Fuel consumption (Gallons per 100 Miles)&quot;
+
+</code></pre>
+<h2><a href="#examine-the-variables" id="examine-the-variables">Examine the variables</a></h2>
+<p>We examine variables for possible errors in the data.</p>
+<pre><code>. describe fuel weight
+
+              storage   display    value
+variable name   type    format     label      variable label
+--------------------------------------------------------------------------------
+fuel            float   %9.0g                 Fuel consumption (Gallons per 100
+                                                Miles)
+weight          int     %8.0gc                Weight (lbs.)
+
+</code></pre>
+<pre><code>. summarize weight
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      weight |         74    3019.459    777.1936       1760       4840
+
+</code></pre>
+<p>The variable <strong>weight</strong> has minimum value 1760.00, maximum value 4840.00, and range 3080.00.</p>
+<h2><a href="#plot-fuel-consumption-and-vehicle-weight" id="plot-fuel-consumption-and-vehicle-weight">Plot fuel consumption and vehicle weight</a></h2>
+<pre><code>. scatter fuel weight, mcolor(blue%50)
+
+</code></pre>
+<p><img src="sc_gp100m_mpg.png" alt="scatter fuel weight" /></p>
+<h2><a href="#explore-relationship-between-fuel-consumption-and-vehicle-weight-linear-regression" id="explore-relationship-between-fuel-consumption-and-vehicle-weight-linear-regression">Explore relationship between fuel consumption and vehicle weight - linear regression</a></h2>
+<pre><code>. regress fuel weight
+
+      Source |       SS           df       MS      Number of obs   =        74
+-------------+----------------------------------   F(1, 72)        =    194.71
+       Model |  87.2964969         1  87.2964969   Prob &gt; F        =    0.0000
+    Residual |  32.2797639        72  .448330054   R-squared       =    0.7300
+-------------+----------------------------------   Adj R-squared   =    0.7263
+       Total |  119.576261        73  1.63803097   Root MSE        =    .66957
+
+------------------------------------------------------------------------------
+        fuel |      Coef.   Std. Err.      t    P&gt;|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      weight |    .001407   .0001008    13.95   0.000      .001206    .0016081
+       _cons |   .7707669   .3142571     2.45   0.017     .1443069    1.397227
+------------------------------------------------------------------------------
+
+</code></pre>
+<p>The regression shows that for every unit increase in weight, a 0.0014 unit increase in fuel consumption is predicted.</p>
+<h2><a href="#produce-an-html-table-from-regression-results" id="produce-an-html-table-from-regression-results">Produce an HTML table from regression results</a></h2>
+<p>. _coef_table, markdown</p>
+<table>
+<thead>
+<tr><th>fuel        </th><th>      Coef.</th><th>   Std. Err.</th><th>      t </th><th> P&gt;|t|</th><th colspan="2">[95% Conf. Interval]     </th></tr>
+</thead>
+<tbody>
+<tr><td>weight       </td><td>   .001407 </td><td>  .0001008 </td><td>   13.95 </td><td>  0.000 </td><td>     .001206 </td><td>   .0016081 </td></tr>
+<tr><td>_cons        </td><td>  .7707669</td><td>  .3142571 </td><td>    2.45 </td><td>  0.017 </td><td>    .1443069 </td><td>   1.397227 </td></tr>
+</tbody>
+</table>
+<h2><a href="#produce-a-table-from-estimates-table" id="produce-a-table-from-estimates-table">Produce a table from <strong>estimates table</strong></a></h2>
+<pre><code>. quietly regress fuel weight gear turn
+
+. estimates store model1
+
+. quietly regress fuel weight gear turn foreign
+
+. estimates store model2
+
+. estimates table model1 model2, b(%7.4f) stats(N r2_a) star
+
+----------------------------------------
+    Variable |   model1       model2    
+-------------+--------------------------
+      weight |  0.0014***    0.0013***  
+  gear_ratio |  0.1706      -0.3367     
+        turn |  0.0243       0.0613     
+     foreign |               0.8650***  
+       _cons | -0.5814      -0.4661     
+-------------+--------------------------
+           N |      74           74     
+        r2_a |  0.7218       0.7637     
+----------------------------------------
+legend: * p&lt;0.05; ** p&lt;0.01; *** p&lt;0.001
+
+</code></pre>
+<p>. estimates table model1 model2, varlabel b(%7.4f) stats(N r2_a) star markdown</p>
+<table>
+<thead>
+<tr><th>                 Variable </th><th>   model1   </th><th>   model2   </th></tr>
+</thead>
+<tbody>
+<tr><td>            Weight (lbs.) </td><td>  0.0014*** </td><td>  0.0013*** </td></tr>
+<tr><td>               Gear Ratio </td><td>  0.1706    </td><td> -0.3367    </td></tr>
+<tr><td>        Turn Circle (ft.) </td><td>  0.0243    </td><td>  0.0613    </td></tr>
+<tr><td>                 Car type </td><td>            </td><td>  0.8650*** </td></tr>
+<tr><td>                 Constant </td><td> -0.5814    </td><td> -0.4661    </td></tr>
+<tr><td>                        N </td><td>      74    </td><td>      74    </td></tr>
+<tr><td>                     r2_a </td><td>  0.7218    </td><td>  0.7637    </td></tr>
+</tbody>
+</table>
+<p>legend: * p&lt;0.05; ** p&lt;0.01; *** p&lt;0.001</p>
+<h2><a href="#produce-a-table-from-community-contributed-esttab" id="produce-a-table-from-community-contributed-esttab">Produce a table from community-contributed <strong>esttab</strong></a></h2>
+<pre><code>. eststo : quietly regress fuel weight gear turn
+(est1 stored)
+
+. eststo : quietly regress fuel weight gear turn foreign
+(est2 stored)
+
+. esttab using esttab_ex.html, label   /// 
+&gt;         width(80%) nogaps                ///
+&gt;         mtitles(&quot;Model 1&quot; &quot;Model 2&quot;)       ///
+&gt;         title(Regression table using -esttab-) 
+(output written to esttab_ex.html)
+
+</code></pre>
+<table border="0" width="80%">
+<caption>Regression table using -esttab-</caption>
+<tr><td colspan=3><hr></td></tr>
+<tr><td>                    </td><td>         (1)              </td><td>         (2)              </td></tr>
+<tr><td>                    </td><td>     Model 1              </td><td>     Model 2              </td></tr>
+<tr><td colspan=3><hr></td></tr>
+<tr><td>Weight (lbs.)       </td><td>     0.00136<sup>***</sup></td><td>     0.00126<sup>***</sup></td></tr>
+<tr><td>                    </td><td>      (6.09)              </td><td>      (6.06)              </td></tr>
+<tr><td>Gear Ratio          </td><td>       0.171              </td><td>      -0.337              </td></tr>
+<tr><td>                    </td><td>      (0.64)              </td><td>     (-1.19)              </td></tr>
+<tr><td>Turn Circle (ft.)   </td><td>      0.0243              </td><td>      0.0613              </td></tr>
+<tr><td>                    </td><td>      (0.70)              </td><td>      (1.81)              </td></tr>
+<tr><td>Car type            </td><td>                          </td><td>       0.865<sup>***</sup></td></tr>
+<tr><td>                    </td><td>                          </td><td>      (3.66)              </td></tr>
+<tr><td>Constant            </td><td>      -0.581              </td><td>      -0.466              </td></tr>
+<tr><td>                    </td><td>     (-0.38)              </td><td>     (-0.33)              </td></tr>
+<tr><td colspan=3><hr></td></tr>
+<tr><td>Observations        </td><td>          74              </td><td>          74              </td></tr>
+<tr><td colspan=3><hr></td></tr>
+<tr><td colspan=3>
+<i>t</i> statistics in parentheses
+<br /><sup>*</sup> <i>p</i> < 0.05, <sup>**</sup> <i>p</i> < 0.01, <sup>***</sup> <i>p</i> < 0.001
+</td></tr>
+</table>
+<p>The community-contributed <strong>esttab</strong> is available on the Boston College Statistical Software Components (SSC) archive; see <a href="https://www.stata.com/support/ssc-installation/">ssc install</a> for details.</p>

@@ -1,0 +1,40 @@
+# A fuel consumption study of Stata's auto dataset
+
+We conduct a study of the fuel consumption of cars in Stata's auto dataset. 
+~~~~
+<<dd_do>>
+sysuse auto, clear
+<</dd_do>>
+~~~~
+
+We generate a variable, **fuel**, that measures the fuel consumption rate in the unit of 
+Gallons per 100 Miles.  
+~~~~
+<<dd_do>>
+generate fuel = 100/mpg
+label variable fuel "Fuel consumption (Gallons per 100 Miles)"
+<</dd_do>>
+~~~~
+
+## Explore relationship between fuel consumption and vehicle weight 
+~~~~
+<<dd_do>>
+scatter fuel weight, mcolor(blue%50)
+<</dd_do>>
+~~~~
+
+<<dd_graph: saving("sc_fuel.svg") alt("scatter fuel weight") replace height(400)>>
+
+~~~~
+<<dd_do>>
+regress fuel weight
+<</dd_do>>
+~~~~
+
+<<dd_do:quietly>>
+matrix eb = e(b)
+<</dd_do>>
+
+The regression shows that for every unit increase in weight, a 
+<<dd_display:%9.4f eb[1,1]>> unit increase in fuel consumption is predicted.
+

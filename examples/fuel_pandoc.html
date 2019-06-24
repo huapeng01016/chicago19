@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+</head>
+<body>
+<head>
+<link rel="stylesheet" type="text/css" href="stmarkdown.css">
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+<script type="text/javascript" async
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML">
+</script>
+</head>
+<h1 id="a-fuel-consumption-study-of-statas-auto-dataset">A fuel consumption study of Stata's auto dataset</h1>
+<p>We conduct a study of the fuel consumption of cars in Stata's auto dataset.</p>
+<pre><code>. sysuse auto, clear
+(1978 Automobile Data)
+</code></pre>
+<h2 id="perform-data-transformation">Perform data transformation</h2>
+<p>We generate a variable, <strong>fuel</strong>, that measures the fuel consumption rate in the unit of Gallons per 100 Miles.</p>
+<pre><code>. generate fuel = 100/mpg
+
+. label variable fuel &quot;Fuel consumption (Gallons per 100 Miles)&quot;
+</code></pre>
+<h2 id="examine-the-variables">Examine the variables</h2>
+<p>We examine variables for possible errors in the data.</p>
+<pre><code>. describe fuel weight
+
+              storage   display    value
+variable name   type    format     label      variable label
+--------------------------------------------------------------------------------
+fuel            float   %9.0g                 Fuel consumption (Gallons per 100
+                                                Miles)
+weight          int     %8.0gc                Weight (lbs.)
+</code></pre>
+<pre><code>. summarize weight
+
+    Variable |        Obs        Mean    Std. Dev.       Min        Max
+-------------+---------------------------------------------------------
+      weight |         74    3019.459    777.1936       1760       4840
+</code></pre>
+<p>The variable <strong>weight</strong> has minimum value 1760.00, maximum value 4840.00, and range 3080.00.</p>
+<h2 id="plot-fuel-consumption-and-vehicle-weight">Plot fuel consumption and vehicle weight</h2>
+<pre><code>. scatter fuel weight, mcolor(blue%50)
+</code></pre>
+<div class="figure">
+<img src="sc_fuel_cc.png" alt="scatter fuel weight" />
+<p class="caption">scatter fuel weight</p>
+</div>
+<h2 id="explore-relationship-between-fuel-consumption-and-vehicle-weight---linear-regression">Explore relationship between fuel consumption and vehicle weight - linear regression</h2>
+<pre><code>. regress fuel weight
+
+      Source |       SS           df       MS      Number of obs   =        74
+-------------+----------------------------------   F(1, 72)        =    194.71
+       Model |  87.2964969         1  87.2964969   Prob &gt; F        =    0.0000
+    Residual |  32.2797639        72  .448330054   R-squared       =    0.7300
+-------------+----------------------------------   Adj R-squared   =    0.7263
+       Total |  119.576261        73  1.63803097   Root MSE        =    .66957
+
+------------------------------------------------------------------------------
+        fuel |      Coef.   Std. Err.      t    P&gt;|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      weight |    .001407   .0001008    13.95   0.000      .001206    .0016081
+       _cons |   .7707669   .3142571     2.45   0.017     .1443069    1.397227
+------------------------------------------------------------------------------
+</code></pre>
+<p>The regression shows that for every unit increase in weight, a 0.0014 unit increase in fuel consumption is predicted.</p>
+</body>
+</html>

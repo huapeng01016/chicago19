@@ -1,0 +1,24 @@
+<<dd_do: quietly>>
+syntax anything(name=car)
+<</dd_do>>
+
+<<dd_display: "1978 `car'">>
+============================
+
+<<dd_do: quietly>>
+use auto_78_img, clear
+preserve
+keep if make == "`car'"
+local name = subinstr("images/"+make[1]+".jpg", " ", "_", .)
+generate res = filewrite("`name'", image, 1)
+<</dd_do>>
+
+- Price : $<<dd_display: %8.0gc price[1]>>
+- Gallons per 100 Miles: <<dd_display: %9.2f 100/mpg[1]>>
+
+<img src="<<dd_display:"../`name'">>" width="400" />
+
+<<dd_do: quietly>>
+restore
+<</dd_do>>
+
