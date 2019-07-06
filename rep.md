@@ -100,11 +100,8 @@ plt.savefig("sandstone.png")
 end
 <</dd_do>>
 
-
-
 ## Output
 ![sandstone image](sandstone.png "sandstone.png")
-
 
 # Useful tips
 
@@ -112,13 +109,47 @@ end
 - Indentation and space
 - Package management
 
-# Showoff
+# Web scraping 
 
-## lambda and 3-D graphics
+## Use **pandas** to get Nasdaq 100 ticks
 
-## Random forest
+~~~~
+python:
+import pandas as pd
 
-## Web scraping 
+data = pd.read_html("https://en.wikipedia.org/wiki/NASDAQ-100")
+table = data[2]
+t1 = table[1]
+t1 = t1[1:].tolist()
+end
+~~~~
+
+## Put results into a Stata varaible
+
+~~~~
+python:
+from sfi import Data
+Data.addObs(len(t1))
+stata: gen ticker = ""
+Data.store('ticker', range(len(t1)), t1)
+end
+~~~~
+
+## Resulted dataset
+
+<<dd_do: quietly>>
+use stata/nasdaq_tic.dta, clear
+<</dd_do>>
+
+~~~~
+<<dd_do>>
+list in 1/5, clean
+<</dd_do>>
+~~~~
+
+## Get 
+
+# Support Vector Machine (SVM)
 
 # Recap
 
