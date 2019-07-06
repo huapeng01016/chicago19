@@ -58,62 +58,82 @@
 <section id="stata-user-conference-chicago" class="level3">
 <h3>2019 Stata User Conference Chicago</h3>
 </section>
-<section id="httpshuapeng01016.github.iochicago19" class="level3">
-<h3><a href="https://huapeng01016.github.io/chicago19/" class="uri">https://huapeng01016.github.io/chicago19/</a></h3>
+<section id="httpstinyurl.comy3h35tt3" class="level3">
+<h3><a href="https://huapeng01016.github.io/chicago19/">https://tinyurl.com/y3h35tt3</a></h3>
 </section>
 </section>
 </section>
-<section id="stata-16-has-tight-integration-with-python" class="slide level1">
-<h1>Stata 16 has tight integration with Python</h1>
+<section id="stata-16-introduces-tight-integration-with-python" class="slide level1">
+<h1>Stata 16 introduces tight integration with Python</h1>
 <ul>
-<li>embed and execute Python code</li>
-<li>use Python interactively</li>
-<li>define and use Python routines in do-files and ado-files</li>
-<li>Stata Function Interface (sfi)</li>
+<li>Embed and execute Python code</li>
+<li>Use Python interactively</li>
+<li>Define and use Python routines in do-files and ado-files</li>
+<li>Inteact with Stata through Stata Function Interface (sfi)</li>
 </ul>
 </section>
 <section id="first-interactive-session" class="slide level1">
 <h1>First interactive session</h1>
+<p><strong>Hello World!</strong></p>
 <pre><code>. python:
------------------------------------------------ python (type end to exit) ------
+----------------------------------------------- python (type end to exit) ----------------------------------
+&gt;&gt;&gt; print('Hello World!')
+Hello World!
 &gt;&gt;&gt; 2+3
 5
-&gt;&gt;&gt; print(2*3)
-6
+&gt;&gt;&gt; range(6)
+range(0, 6)
 &gt;&gt;&gt; end
---------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
 </code></pre>
 </section>
-<section id="a-more-interesting-interactive-session" class="slide level1">
-<h1>A more interesting interactive session</h1>
+<section id="interactive-session-2" class="slide level1">
+<h1>Interactive session 2</h1>
+<p>Indentation is important when typing Python code in Stata.</p>
 <pre><code>. python:
------------------------------------------------ python (type end to exit) ------
-&gt;&gt;&gt; from functools import reduce
-&gt;&gt;&gt; a = [1, 2, 3, 4, 5, 6, 7] 
-&gt;&gt;&gt; sum = reduce((lambda x, y: x + y), a)
-&gt;&gt;&gt; print(sum) 
-28
+----------------------------------------------- python (type end to exit) ----------------------------------
+&gt;&gt;&gt; sum = 0
+&gt;&gt;&gt; for i in range(7):
+...     sum = sum + i 
+&gt;&gt;&gt; print(sum)
+21
 &gt;&gt;&gt; end
---------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
 </code></pre>
 </section>
-<section id="use-sfi" class="slide level1">
-<h1>Use SFI</h1>
+<section id="interactive-session-3" class="slide level1">
+<h1>Interactive session 3</h1>
+<p><strong>sfi</strong> allows Python code to bidirectionally communicate with Stata.</p>
 <pre><code>. python:
------------------------------------------------ python (type end to exit) ------
+----------------------------------------------- python (type end to exit) ----------------------------------
 &gt;&gt;&gt; from functools import reduce
-&gt;&gt;&gt; from sfi import Data
+&gt;&gt;&gt; from sfi import Data, Macro
 &gt;&gt;&gt; stata: sysuse auto, clear
 (1978 Automobile Data)
-&gt;&gt;&gt; a = Data.get(var='price') 
-&gt;&gt;&gt; sum = reduce((lambda x, y: x + y), a)
-&gt;&gt;&gt; from sfi import Macro
+&gt;&gt;&gt; sum = reduce((lambda x, y: x + y), Data.get(var='price'))
 &gt;&gt;&gt; Macro.setLocal('sum', str(sum))
 &gt;&gt;&gt; end
---------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
 
-. di &quot;sum of price = `sum'&quot;
-sum of price = 456229
+. di &quot;sum of var price is : `sum'&quot;
+sum of var price is : 456229
+</code></pre>
+</section>
+<section id="interactive-session-4" class="slide level1">
+<h1>Interactive session 4</h1>
+<p>There are usually mutiple tools in SFI to help you archive the same object, for example, handle missing values.</p>
+<pre><code>. python:
+----------------------------------------------- python (type end to exit) ----------------------------------
+&gt;&gt;&gt; stata: sysuse auto, clear
+(1978 Automobile Data)
+&gt;&gt;&gt; sum1 = reduce((lambda x, y: x + y), Data.get(var='rep78'))
+&gt;&gt;&gt; sum1
+inf
+&gt;&gt;&gt; sum2 = reduce((lambda x, y: x + y), Data.get(var='rep78', selectvar=-1))
+&gt;&gt;&gt; sum2
+235
+&gt;&gt;&gt; end
+------------------------------------------------------------------------------------------------------------
 </code></pre>
 </section>
 <section id="another-example" class="slide level1">
@@ -121,7 +141,7 @@ sum of price = 456229
 <section id="setup" class="level2">
 <h2>Setup</h2>
 <pre><code>. python:
------------------------------------------------ python (type end to exit) ------
+----------------------------------------------- python (type end to exit) ----------------------------------
 &gt;&gt;&gt; import numpy as np
 &gt;&gt;&gt; import matplotlib
 &gt;&gt;&gt; matplotlib.use('TkAgg')
@@ -129,18 +149,18 @@ sum of price = 456229
 &gt;&gt;&gt; from mpl_toolkits import mplot3d
 &gt;&gt;&gt; from sfi import Data
 &gt;&gt;&gt; end
---------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
 </code></pre>
 </section>
 <section id="get-data-from-stata" class="level2">
 <h2>Get data from Stata</h2>
 <pre><code>. python:
------------------------------------------------ python (type end to exit) ------
+----------------------------------------------- python (type end to exit) ----------------------------------
 &gt;&gt;&gt; stata: sysuse sandstone, clear
 (Subsea elevation of Lamont sandstone in an area of Ohio)
 &gt;&gt;&gt; D = np.array(Data.get(&quot;northing easting depth&quot;))
 &gt;&gt;&gt; end
---------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
 </code></pre>
 </section>
 <section id="graph" class="level2">
@@ -201,6 +221,9 @@ end</code></pre>
   4.     ALXN  
   5.     ALGN  
 </code></pre>
+</section>
+<section id="get" class="level2">
+<h2>Get</h2>
 </section>
 </section>
 <section id="support-vector-machine-svm" class="slide level1">

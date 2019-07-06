@@ -2,53 +2,75 @@
 
 ##  [Hua Peng@StataCorp][hpeng]
 ### 2019 Stata User Conference Chicago 
-### [https://huapeng01016.github.io/chicago19/](https://huapeng01016.github.io/chicago19/)
+### [https://tinyurl.com/y3h35tt3](https://huapeng01016.github.io/chicago19/)
 
-# Stata 16 has tight integration with Python
+# Stata 16 introduces tight integration with Python
 
-- embed and execute Python code 
-- use Python interactively
-- define and use Python routines in do-files and ado-files
-- Stata Function Interface (sfi)
+- Embed and execute Python code 
+- Use Python interactively
+- Define and use Python routines in do-files and ado-files
+- Inteact with Stata through Stata Function Interface (sfi)
 
-# First interactive session
+# Use Python i0nteractively
+
+## Interactive session 1
+
+**Hello World!**
 
 ~~~~
 <<dd_do>>
 python:
+print('Hello World!')
 2+3
-print(2*3)
 end
 <</dd_do>>
 ~~~~
 
-# A more interesting interactive session
+## Interactive session 2
+
+Indentation is important when typing Python code in Stata. 
 
 ~~~~
 <<dd_do>>
 python:
-from functools import reduce
-a = [1, 2, 3, 4, 5, 6, 7] 
-sum = reduce((lambda x, y: x + y), a)
+sum = 0
+for i in range(7):
+    sum = sum + i 
 print(sum) 
 end
 <</dd_do>>
 ~~~~
 
-# Use SFI 
+## Interactive session 3
+
+**sfi** allows Python code to bidirectionally communicate with Stata.
 
 ~~~~
 <<dd_do>>
 python:
 from functools import reduce
-from sfi import Data
-stata: sysuse auto, clear
-a = Data.get(var='price') 
-sum = reduce((lambda x, y: x + y), a)
-from sfi import Macro
+from sfi import Data, Macro
+stata: quietly sysuse auto, clear
+sum = reduce((lambda x, y: x + y), Data.get(var='price'))
 Macro.setLocal('sum', str(sum))
 end
-di "sum of price = `sum'"
+display "sum of var price is : `sum'"
+<</dd_do>>
+~~~~
+
+## Interactive session 4
+
+There are usually mutiple tools in SFI to help you archive the same objective, for example, handle missing values.
+
+~~~~
+<<dd_do>>
+python:
+stata: quietly sysuse auto, clear
+sum1 = reduce((lambda x, y: x + y), Data.get(var='rep78'))
+sum1
+sum2 = reduce((lambda x, y: x + y), Data.get(var='rep78', selectvar=-1))
+sum2
+end
 <</dd_do>>
 ~~~~
 
