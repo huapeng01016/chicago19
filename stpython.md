@@ -60,7 +60,7 @@ display "sum of var price is : `sum'"
 
 ## Interactive session 4
 
-There are usually mutiple tools in SFI to help you archive the same objective, for example, handle missing values.
+Use **sfi** to handle missing values.
 
 ~~~~
 <<dd_do>>
@@ -74,9 +74,18 @@ end
 <</dd_do>>
 ~~~~
 
-# Another example
+# Use Python packages
 
-## Setup 
+* Pandas
+* Numpy, PuLP, PyMC3
+* lxml, BeautifulSoup
+* Matplotlib, ggplot2
+* scikit-learn, Tensorflow, Keras, PyTorch
+* NLTK, spacy
+
+# A 3d surface plot example
+
+## Setup
 
 ~~~~
 <<dd_do>>
@@ -92,6 +101,9 @@ end
 ~~~~
 
 ## Get data from Stata
+
+We use **sandstone** dataset, which is the example dataset for **twoway contour**.
+
 ~~~~
 <<dd_do>>
 python:
@@ -102,12 +114,15 @@ end
 ~~~~
 
 ## Graph
+
+We draw a surface plot using a triangular mesh. 
+
 ~~~~
 python:
 ax = plt.axes(projection='3d')
 plt.xticks(np.arange(60000, 90001, step=10000))
 plt.yticks(np.arange(30000, 50001, step=5000))
-ax.plot_trisurf(D[:,0], D[:,1], D[:,2], cmap='viridis', edgecolor='none');
+ax.plot_trisurf(D[:,0], D[:,1], D[:,2], cmap='viridis', edgecolor='none')
 plt.savefig("sandstone.png")
 end
 ~~~~
@@ -117,7 +132,7 @@ python:
 ax = plt.axes(projection='3d')
 plt.xticks(np.arange(60000, 90001, step=10000))
 plt.yticks(np.arange(30000, 50001, step=5000))
-ax.plot_trisurf(D[:,0], D[:,1], D[:,2], cmap='viridis', edgecolor='none');
+ax.plot_trisurf(D[:,0], D[:,1], D[:,2], cmap='viridis', edgecolor='none')
 plt.savefig("sandstone.png")
 end
 <</dd_do>>
@@ -125,11 +140,29 @@ end
 ## Output
 ![sandstone image](sandstone.png "sandstone.png")
 
-# Useful tips
+## Change the look of the graph
 
-- Python environment
-- Indentation and space
-- Package management
+~~~~
+python:
+ax.plot_trisurf(D[:,0], D[:,1], D[:,2], cmap=plt.cm.Spectral, edgecolor='none')
+plt.savefig("sandstone1.png")
+end
+~~~~
+
+<<dd_do:quietly>>
+python:
+ax.plot_trisurf(D[:,0], D[:,1], D[:,2], cmap=plt.cm.Spectral, edgecolor='none')
+ax.view_init(30, 60)
+plt.savefig("sandstone1.png")
+end
+<</dd_do>>
+
+## Output
+![sandstone1 image](sandstone1.png "sandstone1.png")
+
+## Or make some animation ([do-file](./stata/gif3d.do))
+
+![sandstone gif](./sandstone.gif)
 
 # Web scraping 
 
@@ -173,7 +206,10 @@ list in 1/5, clean
 
 # Support Vector Machine (SVM)
 
-# Recap
+# Useful tips
+
+- Python environment
+- Package management
 
 # Thanks!
 
