@@ -1,6 +1,3 @@
-cscript 
-
-python:
 import sys
 import requests
 import json
@@ -12,6 +9,9 @@ from time import sleep
 from sfi import Frame
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+stockticker = sys.argv[1]
+framename = sys.argv[2]
 
 def get_nasdaq_detail(ticker):
 	key_stock_dict = {}
@@ -74,7 +74,21 @@ def get_nasdaq_detail(ticker):
 		except Exception as e:
 			print("Failed to process the request, Exception:%s"%(e))
 
-data = get_nasdaq_detail('ATVI')
-data
+def add_detail_toframe(nasdaq_data, detail):
+	if detail.getVarCount() == 0:
+		detail.addVarStr('company', 10)
+		detail.addVarStr('ticker', 10)
+		detail.addVarStr('url', 10)
+		detail.addVarStr('open_price', 10)
+		detail.addVarStr('open_date', 10)
+		detail.addVarStr('close_price', 10)
+		detail.addVarStr('close_date', 10)
+		detail.addVarStrL('note')
 
-end
+	obs = detail.getObsTotal()
+	detail.addObs(1)
+	detail.store(None, obs, nasdaq_data)
+
+detail = Frame.connect(framename)
+data = get_nasdaq_detail(stockticker)
+add_detail_toframe(data, detail)

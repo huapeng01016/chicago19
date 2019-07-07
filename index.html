@@ -78,41 +78,41 @@
 <h2>Interactive session 1</h2>
 <p><strong>Hello World!</strong></p>
 <pre><code>. python:
------------------------------------------------ python (type end to exit) -----
+----------------------------------------------- python (type end to exit) -----------------------------------------------------------------------------------------------------
 &gt;&gt;&gt; print('Hello World!')
 Hello World!
 &gt;&gt;&gt; 2+3
 5
 &gt;&gt;&gt; end
--------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 </code></pre>
 </section>
 <section id="interactive-session-2" class="level2">
 <h2>Interactive session 2</h2>
 <p>Indentation is important when typing Python code in Stata.</p>
 <pre><code>. python:
------------------------------------------------ python (type end to exit) -----
+----------------------------------------------- python (type end to exit) -----------------------------------------------------------------------------------------------------
 &gt;&gt;&gt; sum = 0
 &gt;&gt;&gt; for i in range(7):
 ...     sum = sum + i 
 &gt;&gt;&gt; print(sum)
 21
 &gt;&gt;&gt; end
--------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 </code></pre>
 </section>
 <section id="interactive-session-3" class="level2">
 <h2>Interactive session 3</h2>
 <p><strong>sfi</strong> allows Python code to bidirectionally communicate with Stata.</p>
 <pre><code>. python:
------------------------------------------------ python (type end to exit) -----
+----------------------------------------------- python (type end to exit) -----------------------------------------------------------------------------------------------------
 &gt;&gt;&gt; from functools import reduce
 &gt;&gt;&gt; from sfi import Data, Macro
 &gt;&gt;&gt; stata: quietly sysuse auto, clear
 &gt;&gt;&gt; sum = reduce((lambda x, y: x + y), Data.get(var='price'))
 &gt;&gt;&gt; Macro.setLocal('sum', str(sum))
 &gt;&gt;&gt; end
--------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 . display &quot;sum of var price is : `sum'&quot;
 sum of var price is : 456229
@@ -122,7 +122,7 @@ sum of var price is : 456229
 <h2>Interactive session 4</h2>
 <p>Use <strong>sfi</strong> to handle missing values.</p>
 <pre><code>. python:
------------------------------------------------ python (type end to exit) -----
+----------------------------------------------- python (type end to exit) -----------------------------------------------------------------------------------------------------
 &gt;&gt;&gt; stata: quietly sysuse auto, clear
 &gt;&gt;&gt; sum1 = reduce((lambda x, y: x + y), Data.get(var='rep78'))
 &gt;&gt;&gt; sum1
@@ -131,7 +131,7 @@ inf
 &gt;&gt;&gt; sum2
 235
 &gt;&gt;&gt; end
--------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 </code></pre>
 </section>
 </section>
@@ -151,7 +151,7 @@ inf
 <section id="setup" class="level2">
 <h2>Setup</h2>
 <pre><code>. python:
------------------------------------------------ python (type end to exit) -----
+----------------------------------------------- python (type end to exit) -----------------------------------------------------------------------------------------------------
 &gt;&gt;&gt; import numpy as np
 &gt;&gt;&gt; import matplotlib
 &gt;&gt;&gt; matplotlib.use('TkAgg')
@@ -159,19 +159,19 @@ inf
 &gt;&gt;&gt; from mpl_toolkits import mplot3d
 &gt;&gt;&gt; from sfi import Data
 &gt;&gt;&gt; end
--------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 </code></pre>
 </section>
 <section id="get-data-from-stata" class="level2">
 <h2>Get data from Stata</h2>
 <p>We use <strong>sandstone</strong> dataset, which is the example dataset for <strong>twoway contour</strong>.</p>
 <pre><code>. python:
------------------------------------------------ python (type end to exit) -----
+----------------------------------------------- python (type end to exit) -----------------------------------------------------------------------------------------------------
 &gt;&gt;&gt; stata: sysuse sandstone, clear
 (Subsea elevation of Lamont sandstone in an area of Ohio)
 &gt;&gt;&gt; D = np.array(Data.get(&quot;northing easting depth&quot;))
 &gt;&gt;&gt; end
--------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 </code></pre>
 </section>
 <section id="graph" class="level2">
@@ -213,44 +213,135 @@ end</code></pre>
 </section>
 <section id="web-scraping" class="slide level1">
 <h1>Web scraping</h1>
-<section id="use-pandas-to-get-nasdaq-100-ticks" class="level2">
-<h2>Use <strong>pandas</strong> to get Nasdaq 100 ticks</h2>
+<section id="use-pandas-to-get-nasdaq-100-stock-tickers" class="level2">
+<h2>Use <strong>pandas</strong> to get Nasdaq 100 stock tickers</h2>
+<p>We scrape <a href="https://en.wikipedia.org/wiki/NASDAQ-100">Nasdaq 100 stock tickers</a>.</p>
 <pre><code>python:
 import pandas as pd
-
 data = pd.read_html(&quot;https://en.wikipedia.org/wiki/NASDAQ-100&quot;)
-table = data[2]
-t1 = table[1]
-t1 = t1[1:].tolist()
+df = data[2]
+df = df.drop(df.index[0])
+t = df.values.tolist()
 end</code></pre>
 </section>
 <section id="put-results-into-a-stata-varaible" class="level2">
 <h2>Put results into a Stata varaible</h2>
 <pre><code>python:
+Data.addObs(len(t))
 from sfi import Data
-Data.addObs(len(t1))
+stata: gen company = &quot;&quot;
 stata: gen ticker = &quot;&quot;
-Data.store('ticker', range(len(t1)), t1)
+Data.store(None, range(len(t)), t)
 end</code></pre>
+</section>
+<section id="produced-dataset" class="level2">
+<h2>Produced dataset</h2>
+<pre><code>. list in 1/5, clean
+
+                       company   ticker  
+  1.       Activision Blizzard     ATVI  
+  2.                Adobe Inc.     ADBE  
+  3.    Advanced Micro Devices      AMD  
+  4.   Alexion Pharmaceuticals     ALXN  
+  5.    Align Technology, Inc.     ALGN  
+</code></pre>
+</section>
+<section id="get-nasdaq-100-stock-detail" class="level2">
+<h2>Get Nasdaq 100 stock detail</h2>
+<p>We scrape detailed information of a Nasdaq 100 stock, for example <a href="http://www.nasdaq.com/symbol/ATVI">ATVI</a>.</p>
+<p>Call a <a href="stata/nas1detail.py">Python script</a> using <strong>python execute</strong>.</p>
+</section>
+<section id="call-python-script-with-arguments" class="level2">
+<h2>Call Python script with arguments</h2>
+<pre><code>use nas100ticker, clear
+quietly describe
+
+frame create detail
+
+forvalues i = 1/`r(N)' {
+    local a = ticker[`i']
+    local b detail
+    python script nas1detail.py, args(`a' `b')
+    sleep 100
+}
+
+frame detail : save nasd100detail.dta, replace</code></pre>
 </section>
 <section id="resulted-dataset" class="level2">
 <h2>Resulted dataset</h2>
-<pre><code>. list in 1/5, clean
+<pre><code>. list ticker open_price open_date close_price close_date in 1/5, clean
 
-       ticker  
-  1.     ATVI  
-  2.     ADBE  
-  3.      AMD  
-  4.     ALXN  
-  5.     ALGN  
+       ticker   open_p~e      open_date   close~ce     close_date  
+  1.     ATVI    $ 48.33   Jul. 5, 2019    $ 48.15   Jul. 5, 2019  
+  2.     ADBE   $ 303.92   Jul. 5, 2019   $ 303.98   Jul. 5, 2019  
+  3.      AMD    $ 30.87   Jul. 5, 2019    $ 31.50   Jul. 5, 2019  
+  4.     ALXN   $ 132.71   Jul. 5, 2019   $ 130.30   Jul. 5, 2019  
+  5.     ALGN   $ 274.11   Jul. 5, 2019   $ 273.29   Jul. 5, 2019  
 </code></pre>
-</section>
-<section id="get" class="level2">
-<h2>Get</h2>
 </section>
 </section>
 <section id="support-vector-machine-svm" class="slide level1">
 <h1>Support Vector Machine (SVM)</h1>
+<section id="pysvm" class="level2">
+<h2>pysvm</h2>
+<pre><code>program mysvm
+    version 16
+    syntax varlist, predict(name)
+
+    gettoken label feature : varlist
+
+    //call the Python function
+    python: dosvm(&quot;`label'&quot;, &quot;`feature'&quot;, &quot;`predict'&quot;)
+end</code></pre>
+</section>
+<section id="python-code" class="level2">
+<h2>Python code</h2>
+<pre><code>python:
+from sfi import Data
+import numpy as np
+from sklearn.svm import SVC
+
+def dosvm(label, features, predict):
+    X = np.array(Data.get(features))
+    y = np.array(Data.get(label))
+
+    svc_clf = SVC(gamma='auto')
+    svc_clf.fit(X, y)
+
+    y_pred = svc_clf.predict(X)
+
+    Data.addVarByte(predict)
+    Data.store(predict, None, y_pred)
+
+end</code></pre>
+</section>
+<section id="test-on-auto-dataset" class="level2">
+<h2>Test on <strong>auto</strong> dataset</h2>
+<pre><code>. sysuse auto
+(1978 Automobile Data)
+
+. pysvm foreign mpg price, predict(for2)
+</code></pre>
+</section>
+<section id="compare" class="level2">
+<h2>Compare</h2>
+<pre><code>. label values for2 origin
+
+. tabulate foreign for2, row nokey
+
+           |         for2
+  Car type |  Domestic    Foreign |     Total
+-----------+----------------------+----------
+  Domestic |        52          0 |        52 
+           |    100.00       0.00 |    100.00 
+-----------+----------------------+----------
+   Foreign |         0         22 |        22 
+           |      0.00     100.00 |    100.00 
+-----------+----------------------+----------
+     Total |        52         22 |        74 
+           |     70.27      29.73 |    100.00 
+</code></pre>
+</section>
 </section>
 <section id="useful-tips" class="slide level1">
 <h1>Useful tips</h1>

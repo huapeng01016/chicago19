@@ -166,16 +166,17 @@ end
 
 # Web scraping 
 
-## Use **pandas** to get Nasdaq 100 ticks
+## Use **pandas** to get Nasdaq 100 stock tickers
+
+We scrape [Nasdaq 100 stock tickers](https://en.wikipedia.org/wiki/NASDAQ-100).
 
 ~~~~
 python:
 import pandas as pd
-
 data = pd.read_html("https://en.wikipedia.org/wiki/NASDAQ-100")
-table = data[2]
-t1 = table[1]
-t1 = t1[1:].tolist()
+df = data[2]
+df = df.drop(df.index[0])
+t = df.values.tolist()
 end
 ~~~~
 
@@ -183,17 +184,18 @@ end
 
 ~~~~
 python:
+Data.addObs(len(t))
 from sfi import Data
-Data.addObs(len(t1))
+stata: gen company = ""
 stata: gen ticker = ""
-Data.store('ticker', range(len(t1)), t1)
+Data.store(None, range(len(t)), t)
 end
 ~~~~
 
-## Resulted dataset
+## Produced dataset
 
 <<dd_do: quietly>>
-use stata/nasdaq_tic.dta, clear
+use stata/nas100ticker.dta, clear
 <</dd_do>>
 
 ~~~~
@@ -202,9 +204,102 @@ list in 1/5, clean
 <</dd_do>>
 ~~~~
 
-## Get 
+## Get Nasdaq 100 stock detail
+
+We scrape detailed information of a Nasdaq 100 stock, for example [ATVI](http://www.nasdaq.com/symbol/ATVI).
+
+Call a [Python script](stata/nas1detail.py) using **python execute**. 
+
+## Call Python script with arguments
+
+~~~~
+use nas100ticker, clear
+quietly describe
+
+frame create detail
+
+forvalues i = 1/`r(N)' {
+	local a = ticker[`i']
+	local b detail
+	python script nas1detail.py, args(`a' `b')
+	sleep 100
+}
+
+frame detail : save nasd100detail.dta, replace
+~~~~
+
+## Resulted dataset
+
+<<dd_do: quietly>>
+use stata/nasd100detail.dta, clear
+<</dd_do>>
+
+~~~~
+<<dd_do>>
+list ticker open_price open_date close_price close_date in 1/5, clean
+<</dd_do>>
+~~~~
 
 # Support Vector Machine (SVM)
+
+## pysvm
+
+~~~~
+program mysvm
+    version 16
+    syntax varlist, predict(name)
+
+    gettoken label feature : varlist
+
+    //call the Python function
+    python: dosvm("`label'", "`feature'", "`predict'")
+end
+~~~~
+
+## Python code
+
+~~~~
+python:
+from sfi import Data
+import numpy as np
+from sklearn.svm import SVC
+
+def dosvm(label, features, predict):
+    X = np.array(Data.get(features))
+    y = np.array(Data.get(label))
+
+    svc_clf = SVC(gamma='auto')
+    svc_clf.fit(X, y)
+
+    y_pred = svc_clf.predict(X)
+
+    Data.addVarByte(predict)
+    Data.store(predict, None, y_pred)
+
+end
+~~~~
+
+## Test on **auto** dataset
+
+<<dd_do: quietly>>
+adopath + ./stata
+<</dd_do>>
+
+~~~~
+<<dd_do>>
+sysuse auto
+pysvm foreign mpg price, predict(for2)
+<</dd_do>>
+~~~~
+
+## Compare
+
+~~~~
+<<dd_do>>
+label values for2 origin
+tabulate foreign for2, row nokey
+<</dd_do>>
+~~~~
 
 # Useful tips
 
