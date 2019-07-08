@@ -1,30 +1,41 @@
 *! version 1.0.0  01jul2019
 program pysvm2
     version 16
-    syntax varlist, predict(name)
+    syntax varlist(min=3) [if] [in] [, verbose]
 
-    gettoken label feature : varlist
+    gettoken label features : varlist
 
-    //call the Python function
-    python: dosvm("`label'", "`feature'", "`predict'")
+	marksample touse
+	qui count if `touse'
+	if r(N) == 0 {
+		di as text "no observations"
+		exit 2000   
+	}
+	
+	local veb = "no"
+	if "`verbose'" != "" {
+		local veb = "yes"	
+	}
+
+	python: svc_clf=dosvm2("`label'", "`features'", "`touse'", "yes")
 end
 
 version 16
 python:
-from sfi import Data
+from sfi import Data, Macro
 import numpy as np
 from sklearn.svm import SVC
 
-def dosvm(label, features, predict):
-    X = np.array(Data.get(features))
-    y = np.array(Data.get(label))
+def dosvm2(label, features, select, verbose="no"):
+	X = np.array(Data.get(features, selectvar=select))
+	y = np.array(Data.get(label, selectvar=select))
 
-    svc_clf = SVC(gamma='auto')
-    svc_clf.fit(X, y)
+	v = False
+	if verbose != "no":
+		v = True
+	svc_clf = SVC(gamma='auto', verbose=v)
+	svc_clf.fit(X, y)
 
-    y_pred = svc_clf.predict(X)
-
-    Data.addVarByte(predict)
-    Data.store(predict, None, y_pred)
-
+	Macro.setGlobal('e(svm_features)', features)
+	return svc_clf
 end

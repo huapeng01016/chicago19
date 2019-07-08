@@ -11,7 +11,7 @@
 - Define and use Python routines in do-files and ado-files
 - Inteact with Stata through Stata Function Interface (sfi)
 
-# Use Python i0nteractively
+# Use Python interactively
 
 ## Interactive session 1
 
@@ -309,3 +309,5 @@ tabulate foreign for2, row nokey
 # Thanks!
 
 [hpeng]: hpeng@stata.com
+[sfi]: https://www.stata.com/python/api16/
+[P python]:https://www.stata.com/manuals/ppython.pdf
