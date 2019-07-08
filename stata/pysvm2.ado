@@ -1,7 +1,7 @@
 *! version 1.0.0  01jul2019
 program pysvm2
     version 16
-    syntax varlist(min=3) [if] [in] [, verbose]
+    syntax varlist(min=3) [if] [in] 
 
     gettoken label features : varlist
 
@@ -12,30 +12,29 @@ program pysvm2
 		exit 2000   
 	}
 	
-	local veb = "no"
-	if "`verbose'" != "" {
-		local veb = "yes"	
-	}
-
-	python: svc_clf=dosvm2("`label'", "`features'", "`touse'", "yes")
+	python script maindata.py, global
+	python: svm_dic=dosvm2("`label'", "`features'", "`touse'")
 end
 
 version 16
 python:
+import sys
 from sfi import Data, Macro
 import numpy as np
 from sklearn.svm import SVC
 
-def dosvm2(label, features, select, verbose="no"):
+def dosvm2(label, features, select):
 	X = np.array(Data.get(features, selectvar=select))
 	y = np.array(Data.get(label, selectvar=select))
 
-	v = False
-	if verbose != "no":
-		v = True
-	svc_clf = SVC(gamma='auto', verbose=v)
+	svc_clf = SVC(gamma='auto')
 	svc_clf.fit(X, y)
 
+	svm_dic = getattr(sys.modules['__main__'], "svm_dic", None)
+	if svm_dic == None:
+		return None
+	
+	svm_dic['svm_svc_clf'] = svc_clf 
 	Macro.setGlobal('e(svm_features)', features)
-	return svc_clf
+	return svm_dic
 end
