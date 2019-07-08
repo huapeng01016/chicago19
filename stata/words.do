@@ -17,7 +17,9 @@ from wordcloud import WordCloud
 
 
 # Generate a word cloud image
-wordcloud = WordCloud().generate(text)
+# wordcloud = WordCloud().generate(text)
+
+wordcloud = WordCloud(max_font_size=75, max_words=100, background_color="white").generate(text)
 
 # Display the generated image:
 # the matplotlib way:
