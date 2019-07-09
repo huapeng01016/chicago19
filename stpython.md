@@ -26,7 +26,7 @@ end
 
 ## **for** loop
 
-Indentation is important when entering Python code in Stata. 
+Just as when using Python directly, indentation is important when entering Python code in Stata.
 
 ~~~~
 <<dd_do>>
@@ -75,9 +75,9 @@ end
 
 * Pandas
 * Numpy
-* lxml, BeautifulSoup
+* BeautifulSoup, lxml
 * Matplotlib
-* scikit-learn, Tensorflow, Keras
+* Scikit-Learn, Tensorflow, Keras
 * NLTK
 
 # 3D surface plot
@@ -107,8 +107,8 @@ We use the Stata **sandstone** example dataset.
 
 ~~~~
 <<dd_do>>
-sysuse sandstone, clear
-
+use https://www.stata-press.com/data/r16/sandstone, clear
+* Use sfi to get data from Stata
 python:
 D = np.array(Data.get("northing easting depth"))
 end
@@ -191,8 +191,8 @@ end
 
 ~~~~
 python:
-Data.addObs(len(t))
 from sfi import Data
+Data.addObs(len(t))
 stata: gen company = ""
 stata: gen ticker = ""
 Data.store(None, range(len(t)), t)
@@ -222,16 +222,13 @@ a Nasdaq 100 stock, for example [ATVI](http://www.nasdaq.com/symbol/ATVI).
 ~~~~
 use nas100ticker, clear
 quietly describe
-
 frame create detail
-
 forvalues i = 1/`r(N)' {
 	local a = ticker[`i']
 	local b detail
 	python script nas1detail.py, args(`a' `b')
 	sleep 100
 }
-
 frame detail : save nasd100detail.dta, replace
 ~~~~
 
@@ -255,14 +252,12 @@ list ticker open_price open_date close_price close_date in 1/5, clean
 program pysvm
 	version 16
 	syntax varlist, predict(name)
-
 	gettoken label feature : varlist
-
 	python: dosvm("`label'", "`feature'", "`predict'")
 end
 ~~~~
 
-## Python rountion in ado file
+## Python routine in [ado file](./stata/pysvm.ado)
 
 ~~~~
 python:
@@ -309,11 +304,15 @@ tabulate foreign for2, nokey
 
 ## Upgrade 
 
+<<dd_do: quietly>>
+sysuse auto, clear
+set seed 12345
+<</dd_do>>
+
 ~~~~
 <<dd_do>>
-sysuse auto, clear
-pysvm2 foreign mpg price in 40/60
-pysvm2predict for2 in 1/10
+pysvm2 foreign mpg price if runiform() <= 0.2
+pysvm2predict for2
 <</dd_do>>
 ~~~~
 
@@ -332,9 +331,7 @@ tabulate foreign for2, nokey
 program pysvm2
 	version 16
 	syntax varlist(min=3) [if] [in] 
-
 	gettoken label features : varlist
-
 	marksample touse
 	qui count if `touse'
 	if r(N) == 0 {
@@ -353,7 +350,7 @@ program pysvm2
 end
 ~~~~
 
-## Python routine
+## Python routine in [pysvm2.ado](./stata/pysvm2.ado)
 
 ~~~~
 python:
@@ -384,11 +381,9 @@ program pysvm2predict
 	syntax anything [if] [in]
 
 	gettoken newvar rest : anything
-	
 	if "`rest'" != "" {
 		exit 198
 	}
-	
 	confirm new variable `newvar'	
 	marksample touse
 	qui count if `touse'
@@ -402,7 +397,7 @@ program pysvm2predict
 end
 ~~~~
 
-## Python routine
+## Python routine in [pysvm2predict.ado](./stata/pysvm2predict.ado)
 
 ~~~~
 python:
@@ -452,15 +447,17 @@ from __main__ import svc_clf
 ...
 ~~~~
 
-# Read more
-
-- [sfi details and examples][sfi] 
-- [Stata Python documentation][P python]
-
-
 # Thanks!
 
 ![Comments:hpeng@stata.com](words.png "words.png")
+
+# Post-credits...
+
+- [sfi details and examples][sfi] 
+- [Stata Python documentation][P python]
+- [Stata Python integration](https://www.stata.com/new-in-stata/python-integration/)
+- The talk is made with [Stata markdown](https://www.stata.com/features/overview/markdown/) and [dynpandoc](https://ideas.repec.org/c/boc/bocode/s458455.html)
+- [wordcloud do-file](./stata/words.do)
 
 
 [hpeng]: hpeng@stata.com
