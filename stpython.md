@@ -1,4 +1,4 @@
-# Using Python with Stata
+# Stata Python integration
 
 ##  [Hua Peng@StataCorp][hpeng]
 ### 2019 Stata User Conference Chicago 
@@ -8,27 +8,25 @@
 
 - Embed and execute Python code 
 - Use Python interactively
-- Define and use Python routines in do-files and ado-files
-- Inteact with Stata through Stata Function Interface (sfi)
+- Define and use Python routines in do-files 
+- Define and use Python routines in ado-files
+- Interact with Stata through Stata Function Interface (sfi)
 
 # Use Python interactively
 
-## Interactive session 1
-
-**Hello World!**
+## **Hello World!**
 
 ~~~~
 <<dd_do>>
 python:
 print('Hello World!')
-2+3
 end
 <</dd_do>>
 ~~~~
 
-## Interactive session 2
+## **for** loop
 
-Indentation is important when typing Python code in Stata. 
+Indentation is important when entering Python code in Stata. 
 
 ~~~~
 <<dd_do>>
@@ -41,26 +39,25 @@ end
 <</dd_do>>
 ~~~~
 
-## Interactive session 3
-
-**sfi** allows Python code to bidirectionally communicate with Stata.
+## **sfi** 
 
 ~~~~
 <<dd_do>>
 python:
 from functools import reduce
 from sfi import Data, Macro
+
 stata: quietly sysuse auto, clear
+
 sum = reduce((lambda x, y: x + y), Data.get(var='price'))
+
 Macro.setLocal('sum', str(sum))
 end
 display "sum of var price is : `sum'"
 <</dd_do>>
 ~~~~
 
-## Interactive session 4
-
-Use **sfi** to handle missing values.
+## more **sfi** 
 
 ~~~~
 <<dd_do>>
@@ -74,18 +71,24 @@ end
 <</dd_do>>
 ~~~~
 
+## more
+
+It's worth spending time to read [sfi details and examples][sfi] and 
+[Stata Python documentation][P python].
+
+
 # Use Python packages
 
 * Pandas
-* Numpy, PuLP, PyMC3
+* Numpy
 * lxml, BeautifulSoup
-* Matplotlib, ggplot2
-* scikit-learn, Tensorflow, Keras, PyTorch
-* NLTK, spacy
+* Matplotlib
+* scikit-learn, Tensorflow, Keras
+* NLTK
 
 # A 3d surface plot example
 
-## Setup
+## Import Python packages 
 
 ~~~~
 <<dd_do>>
@@ -104,9 +107,9 @@ end
 <</dd_do>>
 ~~~~
 
-## Get data from Stata
+## Get data with **sfi.Data**
 
-We use **sandstone** dataset, which is the example dataset for **twoway contour**.
+We use the Stata **sandstone** example dataset.
 
 ~~~~
 <<dd_do>>
@@ -117,9 +120,9 @@ end
 <</dd_do>>
 ~~~~
 
-## Graph
+## Draw suface plot
 
-We draw a surface plot using a triangular mesh. 
+We use a triangular mesh to produce the graph.   
 
 ~~~~
 python:
@@ -136,19 +139,23 @@ python:
 ax = plt.axes(projection='3d')
 plt.xticks(np.arange(60000, 90001, step=10000))
 plt.yticks(np.arange(30000, 50001, step=5000))
-ax.plot_trisurf(D[:,0], D[:,1], D[:,2], cmap='viridis', edgecolor='none')
+ax.plot_trisurf(D[:,0], D[:,1], D[:,2], 
+	cmap='viridis', edgecolor='none')
 plt.savefig("sandstone.png")
 end
 <</dd_do>>
 
 ## Output
+
 ![sandstone image](sandstone.png "sandstone.png")
 
-## Change the look of the graph
+## Change color map and view anagle
 
 ~~~~
 python:
-ax.plot_trisurf(D[:,0], D[:,1], D[:,2], cmap=plt.cm.Spectral, edgecolor='none')
+ax.plot_trisurf(D[:,0], D[:,1], D[:,2], 
+	cmap=plt.cm.Spectral, edgecolor='none')
+ax.view_init(30, 60)
 plt.savefig("sandstone1.png")
 end
 ~~~~
@@ -162,17 +169,18 @@ end
 <</dd_do>>
 
 ## Output
+
 ![sandstone1 image](sandstone1.png "sandstone1.png")
 
-## Or make some animation ([do-file](./stata/gif3d.do))
+## Animation ([do-file](./stata/gif3d.do))
 
 ![sandstone gif](./sandstone.gif)
 
 # Web scraping 
 
-## Use **pandas** to get Nasdaq 100 stock tickers
+## Get HTML tables with **pandas**
 
-We scrape [Nasdaq 100 stock tickers](https://en.wikipedia.org/wiki/NASDAQ-100).
+We scrape [Nasdaq 100 stock tickers](https://en.wikipedia.org/wiki/NASDAQ-100) with **pandas**.
 
 ~~~~
 python:
@@ -184,7 +192,7 @@ t = df.values.tolist()
 end
 ~~~~
 
-## Put results into a Stata varaible
+## Put results into a Stata dataset
 
 ~~~~
 python:
@@ -196,7 +204,7 @@ Data.store(None, range(len(t)), t)
 end
 ~~~~
 
-## Produced dataset
+## Result
 
 <<dd_do: quietly>>
 use stata/nas100ticker.dta, clear
@@ -208,11 +216,11 @@ list in 1/5, clean
 <</dd_do>>
 ~~~~
 
-## Get Nasdaq 100 stock detail
+## Parse HTML with **lxml**
 
-We scrape detailed information of a Nasdaq 100 stock, for example [ATVI](http://www.nasdaq.com/symbol/ATVI).
+We use a [Python script](./stata/nas1detail.py) to get detailed information of 
+a Nasdaq 100 stock, for example [ATVI](http://www.nasdaq.com/symbol/ATVI).
 
-Call a [Python script](stata/nas1detail.py) using **python execute**. 
 
 ## Call Python script with arguments
 
@@ -232,7 +240,7 @@ forvalues i = 1/`r(N)' {
 frame detail : save nasd100detail.dta, replace
 ~~~~
 
-## Resulted dataset
+## Result
 
 <<dd_do: quietly>>
 use stata/nasd100detail.dta, clear
@@ -249,18 +257,17 @@ list ticker open_price open_date close_price close_date in 1/5, clean
 ## pysvm
 
 ~~~~
-program mysvm
-    version 16
-    syntax varlist, predict(name)
+program pysvm
+	version 16
+	syntax varlist, predict(name)
 
-    gettoken label feature : varlist
+	gettoken label feature : varlist
 
-    //call the Python function
-    python: dosvm("`label'", "`feature'", "`predict'")
+	python: dosvm("`label'", "`feature'", "`predict'")
 end
 ~~~~
 
-## Python code
+## Python rountion in ado file
 
 ~~~~
 python:
@@ -269,16 +276,16 @@ import numpy as np
 from sklearn.svm import SVC
 
 def dosvm(label, features, predict):
-    X = np.array(Data.get(features))
-    y = np.array(Data.get(label))
+	X = np.array(Data.get(features))
+	y = np.array(Data.get(label))
 
-    svc_clf = SVC(gamma='auto')
-    svc_clf.fit(X, y)
+	svc_clf = SVC(gamma='auto')
+	svc_clf.fit(X, y)
 
-    y_pred = svc_clf.predict(X)
+	y_pred = svc_clf.predict(X)
 
-    Data.addVarByte(predict)
-    Data.store(predict, None, y_pred)
+	Data.addVarByte(predict)
+	Data.store(predict, None, y_pred)
 
 end
 ~~~~
@@ -305,12 +312,157 @@ tabulate foreign for2, row nokey
 <</dd_do>>
 ~~~~
 
-# Useful tips
+## Upgrade 
 
-- Python environment
-- Package management
+~~~~
+<<dd_do>>
+sysuse auto, clear
+pysvm2 foreign mpg price in 40/60
+pysvm2predict for2 in 1/10
+label values for2 origin
+tabulate foreign for2, row nokey
+<</dd_do>>
+~~~~
+
+## ado program ([pysvm2.ado](./stata/pysvm2.ado))
+
+~~~~
+program pysvm2
+	version 16
+	syntax varlist(min=3) [if] [in] 
+
+	gettoken label features : varlist
+
+	marksample touse
+	qui count if `touse'
+	if r(N) == 0 {
+		di as text "no observations"
+		exit 2000   
+	}
+	
+	python script maindata.py, global
+	python: svm_dic=dosvm2("`label'", "`features'", "`touse'")
+end
+~~~~
+
+## Python routine
+
+~~~~
+python:
+import sys
+from sfi import Data, Macro
+import numpy as np
+from sklearn.svm import SVC
+
+def dosvm2(label, features, select):
+	X = np.array(Data.get(features, selectvar=select))
+	y = np.array(Data.get(label, selectvar=select))
+
+	svc_clf = SVC(gamma='auto')
+	svc_clf.fit(X, y)
+
+	svm_dic = getattr(sys.modules['__main__'], "svm_dic", None)
+	if svm_dic == None:
+		return None
+	
+	svm_dic['svm_svc_clf'] = svc_clf 
+	Macro.setGlobal('e(svm_features)', features)
+	return svm_dic
+end
+~~~~
+
+## [pysvm2predict.ado](./stata/pysvm2predict.ado)
+
+~~~~
+program pysvm2predict
+	version 16
+	syntax anything [if] [in]
+
+	gettoken newvar rest : anything
+	
+	if "`rest'" != "" {
+		exit 198
+	}
+	
+	confirm new variable `newvar'	
+	marksample touse
+	qui count if `touse'
+	if r(N) == 0 {
+		di as text "zero observations"
+		exit 2000
+	}
+
+	qui replace `touse' = _n if `touse' != 0 	
+	python: dosvmpredict2("`newvar'", "`touse'")
+end
+~~~~
+
+## Python routine in Predict 
+
+~~~~
+python:
+import sys
+from sfi import Data, Macro
+import numpy as np
+from sklearn.svm import SVC
+
+def dosvmpredict2(predict, select):
+	features = select + " "+ Macro.getGlobal('e(svm_features)')
+	X = np.array(Data.get(features, selectvar=select))
+
+	svm_dic = getattr(sys.modules['__main__'], "svm_dic", None)
+	if svm_dic == None:
+		return None
+	
+	svc_clf = svm_dic['svm_svc_clf']
+	y_pred = svc_clf.predict(X[:,1:])
+	y1 = np.reshape(y_pred, (-1,1))
+
+	y = np.concatenate((X, y1), axis=1)
+	Data.addVarDouble(predict)
+	dim = y.shape[0]
+	j = y.shape[1]-1
+	for i in range(dim):
+		Data.storeAt(predict, y[i,0]-1, y[i,j])
+	
+end
+~~~~
+
+
+# Pass Python object between ado files
+
+##
+
+In [pysvm2.ado](./stata/pysvm2.ado) ado code:
+
+~~~~
+...
+python script maindata.py, global
+....
+~~~~
+
+##
+
+The [maindata.py](./stata/maindata.py) defines and initializes the shared data. 
+
+~~~~
+svm_dic = {}
+~~~~
+
+## 
+To access **svm_dic** in Python routines in ado files: 
+
+~~~~
+...
+svm_dic = getattr(sys.modules['__main__'], "svm_dic", None)
+...
+~~~~
+
 
 # Thanks!
+
+![Comments:hpeng@stata.com](words.png "words.png")
+
 
 [hpeng]: hpeng@stata.com
 [sfi]: https://www.stata.com/python/api16/

@@ -1,19 +1,34 @@
 *! version 1.0.0  01jul2019
 program pysvm2
-    version 16
-    syntax varlist(min=3) [if] [in] 
+	version 16
+	syntax varlist(min=3) [if] [in] 
 
-    gettoken label features : varlist
+	gettoken label features : varlist
 
 	marksample touse
 	qui count if `touse'
 	if r(N) == 0 {
-		di as text "no observations"
-		exit 2000   
+		di as error "no observations"
+		exit 2000
 	}
 	
-	python script maindata.py, global
+	qui summarize `label' if `touse' 
+	
+	if r(min) >= r(max) {
+		di as error "outcome does not vary"
+		exit 2000
+	}
+	
+	cap findfile maindata.py
+	if _rc != 0 {
+		di as error "maindata.py missing"
+		exit 198
+	}
+	
+	python script `"`r(fn)'"', global
 	python: svm_dic=dosvm2("`label'", "`features'", "`touse'")
+	
+	di as text "note: trainning finished successfully"
 end
 
 version 16
