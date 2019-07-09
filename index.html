@@ -1522,7 +1522,6 @@ sum of var price is : 456229
 <h2>more <strong>sfi</strong></h2>
 <pre><code>. python:
 ----------------------------------------------- python (type end to exit) ------
-&gt;&gt;&gt; stata: quietly sysuse auto, clear
 &gt;&gt;&gt; sum1 = reduce((lambda x, y: x + y), Data.get(var='rep78'))
 &gt;&gt;&gt; sum1
 inf
@@ -1572,10 +1571,12 @@ inf
 <section id="get-data-with-sfi.data" class="level2">
 <h2>Get data with <strong>sfi.Data</strong></h2>
 <p>We use the Stata <strong>sandstone</strong> example dataset.</p>
-<pre><code>. python:
------------------------------------------------ python (type end to exit) ------
-&gt;&gt;&gt; stata: sysuse sandstone, clear
+<pre><code>. sysuse sandstone, clear
 (Subsea elevation of Lamont sandstone in an area of Ohio)
+
+. 
+. python:
+----------------------------------------------- python (type end to exit) ------
 &gt;&gt;&gt; D = np.array(Data.get(&quot;northing easting depth&quot;))
 &gt;&gt;&gt; end
 --------------------------------------------------------------------------------
@@ -1755,7 +1756,7 @@ end</code></pre>
 (1978 Automobile Data)
 
 . pysvm2 foreign mpg price in 40/60
-note: trainning finished successfully
+note: training finished successfully
 
 . pysvm2predict for2 in 1/10
 

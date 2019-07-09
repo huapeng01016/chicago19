@@ -28,7 +28,7 @@ program pysvm2
 	python script `"`r(fn)'"', global
 	python: svm_dic=dosvm2("`label'", "`features'", "`touse'")
 	
-	di as text "note: trainning finished successfully"
+	di as text "note: training finished successfully"
 end
 
 version 16

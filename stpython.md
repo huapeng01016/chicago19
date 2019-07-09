@@ -62,7 +62,6 @@ display "sum of var price is : `sum'"
 ~~~~
 <<dd_do>>
 python:
-stata: quietly sysuse auto, clear
 sum1 = reduce((lambda x, y: x + y), Data.get(var='rep78'))
 sum1
 sum2 = reduce((lambda x, y: x + y), Data.get(var='rep78', selectvar=-1))
@@ -113,8 +112,9 @@ We use the Stata **sandstone** example dataset.
 
 ~~~~
 <<dd_do>>
+sysuse sandstone, clear
+
 python:
-stata: sysuse sandstone, clear
 D = np.array(Data.get("northing easting depth"))
 end
 <</dd_do>>
