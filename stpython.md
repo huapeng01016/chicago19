@@ -92,7 +92,11 @@ end
 python:
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg')
+from sfi import Platform
+
+if Platform.isWindows():
+	matplotlib.use('TkAgg')
+
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 from sfi import Data
