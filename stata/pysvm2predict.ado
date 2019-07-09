@@ -27,16 +27,12 @@ import sys
 from sfi import Data, Macro
 import numpy as np
 from sklearn.svm import SVC
+from __main__ import svc_clf
 
 def dosvmpredict2(predict, select):
-	features = 	select + " "+ Macro.getGlobal('e(svm_features)')
+	features = select + " "+ Macro.getGlobal('e(svm_features)')
 	X = np.array(Data.get(features, selectvar=select))
 
-	svm_dic = getattr(sys.modules['__main__'], "svm_dic", None)
-	if svm_dic == None:
-		return None
-	
-	svc_clf = svm_dic['svm_svc_clf']
 	y_pred = svc_clf.predict(X[:,1:])
 	y1 = np.reshape(y_pred, (-1,1))
 

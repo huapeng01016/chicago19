@@ -13,21 +13,12 @@ program pysvm2
 	}
 	
 	qui summarize `label' if `touse' 
-	
 	if r(min) >= r(max) {
 		di as error "outcome does not vary"
 		exit 2000
 	}
 	
-	cap findfile maindata.py
-	if _rc != 0 {
-		di as error "maindata.py missing"
-		exit 198
-	}
-	
-	python script `"`r(fn)'"', global
-	python: svm_dic=dosvm2("`label'", "`features'", "`touse'")
-	
+	quietly python: dosvm2("`label'", "`features'", "`touse'")	
 	di as text "note: training finished successfully"
 end
 
@@ -37,6 +28,7 @@ import sys
 from sfi import Data, Macro
 import numpy as np
 from sklearn.svm import SVC
+import __main__
 
 def dosvm2(label, features, select):
 	X = np.array(Data.get(features, selectvar=select))
@@ -44,12 +36,8 @@ def dosvm2(label, features, select):
 
 	svc_clf = SVC(gamma='auto')
 	svc_clf.fit(X, y)
-
-	svm_dic = getattr(sys.modules['__main__'], "svm_dic", None)
-	if svm_dic == None:
-		return None
 	
-	svm_dic['svm_svc_clf'] = svc_clf 
+	__main__.svc_clf = svc_clf 
 	Macro.setGlobal('e(svm_features)', features)
-	return svm_dic
+	return svc_clf
 end

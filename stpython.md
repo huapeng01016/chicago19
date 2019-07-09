@@ -57,7 +57,7 @@ display "sum of var price is : `sum'"
 <</dd_do>>
 ~~~~
 
-## more **sfi** 
+## More **sfi** 
 
 ~~~~
 <<dd_do>>
@@ -70,11 +70,6 @@ end
 <</dd_do>>
 ~~~~
 
-## more
-
-It's worth spending time to read [sfi details and examples][sfi] and 
-[Stata Python documentation][P python].
-
 
 # Use Python packages
 
@@ -85,7 +80,7 @@ It's worth spending time to read [sfi details and examples][sfi] and
 * scikit-learn, Tensorflow, Keras
 * NLTK
 
-# A 3d surface plot example
+# 3D surface plot
 
 ## Import Python packages 
 
@@ -254,7 +249,7 @@ list ticker open_price open_date close_price close_date in 1/5, clean
 
 # Support Vector Machine (SVM)
 
-## pysvm
+## **pysvm** ([ado file](./stata/pysvm.ado))
 
 ~~~~
 program pysvm
@@ -308,7 +303,7 @@ pysvm foreign mpg price, predict(for2)
 ~~~~
 <<dd_do>>
 label values for2 origin
-tabulate foreign for2, row nokey
+tabulate foreign for2, nokey
 <</dd_do>>
 ~~~~
 
@@ -319,12 +314,19 @@ tabulate foreign for2, row nokey
 sysuse auto, clear
 pysvm2 foreign mpg price in 40/60
 pysvm2predict for2 in 1/10
-label values for2 origin
-tabulate foreign for2, row nokey
 <</dd_do>>
 ~~~~
 
-## ado program ([pysvm2.ado](./stata/pysvm2.ado))
+## Output
+
+~~~~
+<<dd_do>>
+label values for2 origin
+tabulate foreign for2, nokey
+<</dd_do>>
+~~~~
+
+## Train program ([pysvm2.ado](./stata/pysvm2.ado))
 
 ~~~~
 program pysvm2
@@ -336,12 +338,18 @@ program pysvm2
 	marksample touse
 	qui count if `touse'
 	if r(N) == 0 {
-		di as text "no observations"
-		exit 2000   
+		di as error "no observations"
+		exit 2000
 	}
 	
-	python script maindata.py, global
-	python: svm_dic=dosvm2("`label'", "`features'", "`touse'")
+	qui summarize `label' if `touse' 
+	if r(min) >= r(max) {
+		di as error "outcome does not vary"
+		exit 2000
+	}
+	
+	quietly python: dosvm2("`label'", "`features'", "`touse'")	
+	di as text "note: training finished successfully"
 end
 ~~~~
 
@@ -353,6 +361,7 @@ import sys
 from sfi import Data, Macro
 import numpy as np
 from sklearn.svm import SVC
+import __main__
 
 def dosvm2(label, features, select):
 	X = np.array(Data.get(features, selectvar=select))
@@ -360,18 +369,14 @@ def dosvm2(label, features, select):
 
 	svc_clf = SVC(gamma='auto')
 	svc_clf.fit(X, y)
-
-	svm_dic = getattr(sys.modules['__main__'], "svm_dic", None)
-	if svm_dic == None:
-		return None
 	
-	svm_dic['svm_svc_clf'] = svc_clf 
+	__main__.svc_clf = svc_clf 
 	Macro.setGlobal('e(svm_features)', features)
-	return svm_dic
+	return svc_clf
 end
 ~~~~
 
-## [pysvm2predict.ado](./stata/pysvm2predict.ado)
+## Predict program ([pysvm2predict.ado](./stata/pysvm2predict.ado))
 
 ~~~~
 program pysvm2predict
@@ -397,7 +402,7 @@ program pysvm2predict
 end
 ~~~~
 
-## Python routine in Predict 
+## Python routine
 
 ~~~~
 python:
@@ -405,16 +410,12 @@ import sys
 from sfi import Data, Macro
 import numpy as np
 from sklearn.svm import SVC
+from __main__ import svc_clf
 
 def dosvmpredict2(predict, select):
 	features = select + " "+ Macro.getGlobal('e(svm_features)')
 	X = np.array(Data.get(features, selectvar=select))
 
-	svm_dic = getattr(sys.modules['__main__'], "svm_dic", None)
-	if svm_dic == None:
-		return None
-	
-	svc_clf = svm_dic['svm_svc_clf']
 	y_pred = svc_clf.predict(X[:,1:])
 	y1 = np.reshape(y_pred, (-1,1))
 
@@ -428,7 +429,6 @@ def dosvmpredict2(predict, select):
 end
 ~~~~
 
-
 # Pass Python object between ado files
 
 ##
@@ -437,26 +437,25 @@ In [pysvm2.ado](./stata/pysvm2.ado) ado code:
 
 ~~~~
 ...
-python script maindata.py, global
-....
-~~~~
-
-##
-
-The [maindata.py](./stata/maindata.py) defines and initializes the shared data. 
-
-~~~~
-svm_dic = {}
+import __main__ 
+...
+__main__.svc_clf = svc_clf
+...
 ~~~~
 
 ## 
-To access **svm_dic** in Python routines in ado files: 
+To access **svc_clf** in Python routines in ado files: 
 
 ~~~~
 ...
-svm_dic = getattr(sys.modules['__main__'], "svm_dic", None)
+from __main__ import svc_clf
 ...
 ~~~~
+
+# Read more
+
+- [sfi details and examples][sfi] 
+- [Stata Python documentation][P python]
 
 
 # Thanks!

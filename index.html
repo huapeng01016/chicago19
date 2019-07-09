@@ -1519,7 +1519,7 @@ sum of var price is : 456229
 </code></pre>
 </section>
 <section id="more-sfi" class="level2">
-<h2>more <strong>sfi</strong></h2>
+<h2>More <strong>sfi</strong></h2>
 <pre><code>. python:
 ----------------------------------------------- python (type end to exit) ------
 &gt;&gt;&gt; sum1 = reduce((lambda x, y: x + y), Data.get(var='rep78'))
@@ -1531,10 +1531,6 @@ inf
 &gt;&gt;&gt; end
 --------------------------------------------------------------------------------
 </code></pre>
-</section>
-<section id="more" class="level2">
-<h2>more</h2>
-<p>It’s worth spending time to read <a href="https://www.stata.com/python/api16/">sfi details and examples</a> and <a href="https://www.stata.com/manuals/ppython.pdf">Stata Python documentation</a>.</p>
 </section>
 </section>
 <section id="use-python-packages" class="slide level1">
@@ -1548,8 +1544,8 @@ inf
 <li>NLTK</li>
 </ul>
 </section>
-<section id="a-3d-surface-plot-example" class="slide level1">
-<h1>A 3d surface plot example</h1>
+<section id="d-surface-plot" class="slide level1">
+<h1>3D surface plot</h1>
 <section id="import-python-packages" class="level2">
 <h2>Import Python packages</h2>
 <pre><code>. python:
@@ -1691,8 +1687,8 @@ frame detail : save nasd100detail.dta, replace</code></pre>
 </section>
 <section id="support-vector-machine-svm" class="slide level1">
 <h1>Support Vector Machine (SVM)</h1>
-<section id="pysvm" class="level2">
-<h2>pysvm</h2>
+<section id="pysvm-ado-file" class="level2">
+<h2><strong>pysvm</strong> (<a href="./stata/pysvm.ado">ado file</a>)</h2>
 <pre><code>program pysvm
     version 16
     syntax varlist, predict(name)
@@ -1735,19 +1731,15 @@ end</code></pre>
 <h2>Compare</h2>
 <pre><code>. label values for2 origin
 
-. tabulate foreign for2, row nokey
+. tabulate foreign for2, nokey
 
            |         for2
   Car type |  Domestic    Foreign |     Total
 -----------+----------------------+----------
   Domestic |        52          0 |        52 
-           |    100.00       0.00 |    100.00 
------------+----------------------+----------
    Foreign |         0         22 |        22 
-           |      0.00     100.00 |    100.00 
 -----------+----------------------+----------
      Total |        52         22 |        74 
-           |     70.27      29.73 |    100.00 
 </code></pre>
 </section>
 <section id="upgrade" class="level2">
@@ -1759,23 +1751,24 @@ end</code></pre>
 note: training finished successfully
 
 . pysvm2predict for2 in 1/10
+</code></pre>
+</section>
+<section id="output-2" class="level2">
+<h2>Output</h2>
+<pre><code>. label values for2 origin
 
-. label values for2 origin
-
-. tabulate foreign for2, row nokey
+. tabulate foreign for2, nokey
 
            |    for2
   Car type |  Domestic |     Total
 -----------+-----------+----------
   Domestic |        10 |        10 
-           |    100.00 |    100.00 
 -----------+-----------+----------
      Total |        10 |        10 
-           |    100.00 |    100.00 
 </code></pre>
 </section>
-<section id="ado-program-pysvm2.ado" class="level2">
-<h2>ado program (<a href="./stata/pysvm2.ado">pysvm2.ado</a>)</h2>
+<section id="train-program-pysvm2.ado" class="level2">
+<h2>Train program (<a href="./stata/pysvm2.ado">pysvm2.ado</a>)</h2>
 <pre><code>program pysvm2
     version 16
     syntax varlist(min=3) [if] [in] 
@@ -1785,12 +1778,18 @@ note: training finished successfully
     marksample touse
     qui count if `touse'
     if r(N) == 0 {
-        di as text &quot;no observations&quot;
-        exit 2000   
+        di as error &quot;no observations&quot;
+        exit 2000
     }
     
-    python script maindata.py, global
-    python: svm_dic=dosvm2(&quot;`label'&quot;, &quot;`features'&quot;, &quot;`touse'&quot;)
+    qui summarize `label' if `touse' 
+    if r(min) &gt;= r(max) {
+        di as error &quot;outcome does not vary&quot;
+        exit 2000
+    }
+    
+    quietly python: dosvm2(&quot;`label'&quot;, &quot;`features'&quot;, &quot;`touse'&quot;)  
+    di as text &quot;note: training finished successfully&quot;
 end</code></pre>
 </section>
 <section id="python-routine" class="level2">
@@ -1800,6 +1799,7 @@ import sys
 from sfi import Data, Macro
 import numpy as np
 from sklearn.svm import SVC
+import __main__
 
 def dosvm2(label, features, select):
     X = np.array(Data.get(features, selectvar=select))
@@ -1807,18 +1807,14 @@ def dosvm2(label, features, select):
 
     svc_clf = SVC(gamma='auto')
     svc_clf.fit(X, y)
-
-    svm_dic = getattr(sys.modules['__main__'], &quot;svm_dic&quot;, None)
-    if svm_dic == None:
-        return None
     
-    svm_dic['svm_svc_clf'] = svc_clf 
+    __main__.svc_clf = svc_clf 
     Macro.setGlobal('e(svm_features)', features)
-    return svm_dic
+    return svc_clf
 end</code></pre>
 </section>
-<section id="pysvm2predict.ado" class="level2">
-<h2><a href="./stata/pysvm2predict.ado">pysvm2predict.ado</a></h2>
+<section id="predict-program-pysvm2predict.ado" class="level2">
+<h2>Predict program (<a href="./stata/pysvm2predict.ado">pysvm2predict.ado</a>)</h2>
 <pre><code>program pysvm2predict
     version 16
     syntax anything [if] [in]
@@ -1841,23 +1837,19 @@ end</code></pre>
     python: dosvmpredict2(&quot;`newvar'&quot;, &quot;`touse'&quot;)
 end</code></pre>
 </section>
-<section id="python-routine-in-predict" class="level2">
-<h2>Python routine in Predict</h2>
+<section id="python-routine-1" class="level2">
+<h2>Python routine</h2>
 <pre><code>python:
 import sys
 from sfi import Data, Macro
 import numpy as np
 from sklearn.svm import SVC
+from __main__ import svc_clf
 
 def dosvmpredict2(predict, select):
     features = select + &quot; &quot;+ Macro.getGlobal('e(svm_features)')
     X = np.array(Data.get(features, selectvar=select))
 
-    svm_dic = getattr(sys.modules['__main__'], &quot;svm_dic&quot;, None)
-    if svm_dic == None:
-        return None
-    
-    svc_clf = svm_dic['svm_svc_clf']
     y_pred = svc_clf.predict(X[:,1:])
     y1 = np.reshape(y_pred, (-1,1))
 
@@ -1877,21 +1869,25 @@ end</code></pre>
 <h2></h2>
 <p>In <a href="./stata/pysvm2.ado">pysvm2.ado</a> ado code:</p>
 <pre><code>...
-python script maindata.py, global
-....</code></pre>
+import __main__ 
+...
+__main__.svc_clf = svc_clf
+...</code></pre>
 </section>
 <section id="section-1" class="level2">
 <h2></h2>
-<p>The <a href="./stata/maindata.py">maindata.py</a> defines and initializes the shared data.</p>
-<pre><code>svm_dic = {}</code></pre>
-</section>
-<section id="section-2" class="level2">
-<h2></h2>
-<p>To access <strong>svm_dic</strong> in Python routines in ado files:</p>
+<p>To access <strong>svc_clf</strong> in Python routines in ado files:</p>
 <pre><code>...
-svm_dic = getattr(sys.modules['__main__'], &quot;svm_dic&quot;, None)
+from __main__ import svc_clf
 ...</code></pre>
 </section>
+</section>
+<section id="read-more" class="slide level1">
+<h1>Read more</h1>
+<ul>
+<li><a href="https://www.stata.com/python/api16/">sfi details and examples</a></li>
+<li><a href="https://www.stata.com/manuals/ppython.pdf">Stata Python documentation</a></li>
+</ul>
 </section>
 <section id="thanks" class="slide level1">
 <h1>Thanks!</h1>
