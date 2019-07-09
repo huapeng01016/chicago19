@@ -91,9 +91,9 @@ end
 <<dd_do>>
 python:
 import numpy as np
-import matplotlib
 from sfi import Platform
 
+import matplotlib
 if Platform.isWindows():
 	matplotlib.use('TkAgg')
 
